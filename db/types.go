@@ -6,8 +6,7 @@ import (
 )
 
 type HandlerMongoReplicaSet interface {
-	AddMember(ctx context.Context, host string) error
-	RemoveMember(ctx context.Context, host string) error
+	ReplicaSetReconfig(ctx context.Context, hosts []string) error
 	IsInitialized(ctx context.Context) (bool, error)
 	IsPrimary(ctx context.Context) (bool, error)
 	IsSecondary(ctx context.Context) (bool, error)
@@ -23,7 +22,7 @@ type isMasterResult struct {
 type replicaSetMember struct {
 	ID      int    `bson:"_id"`
 	Host    string `bson:"host"`
-	Healthy int    `bson:"health"`
+	Healthy *int   `bson:"health,omitempty"`
 }
 
 type replicaSetConfig struct {
@@ -56,7 +55,7 @@ func (r *replicaSetConfig) LengthMemberLive() int {
 
 	var count int
 	for _, member := range r.Members {
-		if member.Healthy == 1 {
+		if member.Healthy != nil && *member.Healthy == 1 {
 			count++
 		}
 	}
@@ -67,7 +66,7 @@ func (r *replicaSetConfig) GetMemberNotLive() []*replicaSetMember {
 
 	var members []*replicaSetMember
 	for _, member := range r.Members {
-		if member.Healthy != 1 {
+		if member.Healthy != nil && *member.Healthy != 1 {
 			members = append(members, member)
 		}
 	}

@@ -41,6 +41,10 @@ func (s *sidecarService) Run(ctx context.Context) error {
 		return fmt.Errorf("mongo handler is nil")
 	}
 
+	if types.MONGO_REPLICA_SET.Get() == "" {
+		return fmt.Errorf("mongo replica set is empty please set name of replica set in the env variable: %s", string(types.MONGO_REPLICA_SET))
+	}
+
 	selector, err := stringLabelToMap(types.SIDECAR_SELECTOR_POD.Get())
 
 	if err != nil {
@@ -57,6 +61,8 @@ func (s *sidecarService) Run(ctx context.Context) error {
 		return fmt.Errorf("not found pods with label app=mongo")
 	}
 
+	log.Println("[INFO] found pods: ", pods)
+
 	sleep := time.Second * time.Duration(types.SIDECAR_TIME_SLEEP.Int64())
 	wait := time.Second * time.Duration(types.SIDECAR_TIME_TO_WAIT.Int64())
 
@@ -71,6 +77,7 @@ func (s *sidecarService) Run(ctx context.Context) error {
 	time.Sleep(wait)
 
 	for {
+		time.Sleep(sleep)
 
 		pods, err = s.k8sHandler.GetPodsNamesWithMatchLabels(ctx, selector)
 
@@ -116,38 +123,19 @@ func (s *sidecarService) Run(ctx context.Context) error {
 						morePodsOfMembers := len(hosts) > mongoMembersLive
 						lessPodsOfMembers := len(hosts) < mongoMembersLive
 
-						if morePodsOfMembers {
+						if morePodsOfMembers || lessPodsOfMembers {
 
-							newHosts := []string{}
-
-							for _, host := range hosts {
-								if !replicaConfig.IsMember(host) {
-									newHosts = append(newHosts, host)
-								}
+							if morePodsOfMembers {
+								log.Println("[INFO] more pods of members")
 							}
 
-							for _, host := range newHosts {
-								if err := s.mongoHandler.AddMember(ctx, host); err != nil {
-									log.Println("[WARN] error to add member: ", host, err)
-									continue
-								} else {
-									log.Println("[INFO] new replica member added: ", host)
-								}
+							if lessPodsOfMembers {
+								log.Println("[INFO] less pods of members")
 							}
 
-						}
-
-						if lessPodsOfMembers {
-
-							for _, host := range hosts {
-								if !replicaConfig.IsMember(host) {
-									if err := s.mongoHandler.RemoveMember(ctx, host); err != nil {
-										log.Println("[WARN] error to remove member: ", host, err)
-										continue
-									} else {
-										log.Println("[INFO] replica member removed: ", host)
-									}
-								}
+							if err := s.mongoHandler.ReplicaSetReconfig(ctx, hosts); err != nil {
+								log.Println("[WARN] error to reconfig replica set: ", err)
+								continue
 							}
 
 						}
@@ -158,8 +146,6 @@ func (s *sidecarService) Run(ctx context.Context) error {
 			}
 
 		}
-
-		time.Sleep(sleep)
 
 	}
 

@@ -1,21 +1,21 @@
 package db
 
-import "context"
+import (
+	"context"
+
+	"github.com/mindmain/go-mongo-sidecar/types"
+	"go.mongodb.org/mongo-driver/bson"
+)
 
 func (h *mongoHandler) InitReplicaSet(ctx context.Context, hosts []string) error {
 
-	var members []*replicaSetMember
-
-	for i, host := range hosts {
-		members = append(members, &replicaSetMember{
-			ID:   i,
-			Host: host,
-		})
-	}
-
-	res := h.client.Database("admin").RunCommand(ctx, map[string]interface{}{
-		"replSetInitiate": map[string]interface{}{
-			"members": members,
+	res := h.client.Database("admin").RunCommand(ctx, bson.D{
+		{
+			Key: "replSetInitiate",
+			Value: bson.M{
+				"members": hostsToMembers(hosts),
+				"_id":     types.MONGO_REPLICA_SET.Get(),
+			},
 		},
 	})
 
