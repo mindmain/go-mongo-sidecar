@@ -5,11 +5,16 @@ import (
 	"strings"
 )
 
-func hostsToMembers(hosts []string) []*replicaSetMember {
-	var members []*replicaSetMember
+type configurationReplicaMember struct {
+	ID   int    `bson:"_id"`
+	Host string `bson:"host"`
+}
+
+func hostsToMembers(hosts []string) []*configurationReplicaMember {
+	var members = make([]*configurationReplicaMember, 0, len(hosts))
 
 	for _, host := range hosts {
-		members = append(members, &replicaSetMember{
+		members = append(members, &configurationReplicaMember{
 			ID:   getNumberStatefulSet(host),
 			Host: host,
 		})

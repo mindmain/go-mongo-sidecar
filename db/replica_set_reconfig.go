@@ -7,11 +7,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (h *mongoHandler) ReplicaSetReconfig(ctx context.Context, hosts []string) error {
+func (h *mongoHandler) Reconfig(ctx context.Context, hosts []string) error {
 
 	var ok messageOk
 
-	oldConfig, err := h.GetReplicaSetConfig(ctx)
+	oldConfig, err := h.getConfig(ctx)
 
 	if err != nil {
 		return err

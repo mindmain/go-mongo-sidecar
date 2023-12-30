@@ -7,7 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (h *mongoHandler) InitReplicaSet(ctx context.Context, hosts []string) error {
+func (h *mongoHandler) Init(ctx context.Context, hosts []string) error {
 
 	res := h.client.Database("admin").RunCommand(ctx, bson.D{
 		{

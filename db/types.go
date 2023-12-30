@@ -6,12 +6,13 @@ import (
 )
 
 type HandlerMongoReplicaSet interface {
-	ReplicaSetReconfig(ctx context.Context, hosts []string) error
+	Reconfig(ctx context.Context, hosts []string) error
 	IsInitialized(ctx context.Context) (bool, error)
 	IsPrimary(ctx context.Context) (bool, error)
 	IsSecondary(ctx context.Context) (bool, error)
-	GetReplicaSetConfig(ctx context.Context) (*replicaSetConfig, error)
-	InitReplicaSet(ctx context.Context, hsots []string) error
+	Status(ctx context.Context) (*ReplicaSetConfig, error)
+	//getConfig(ctx context.Context) (*ReplicaSetConfig, error)
+	Init(ctx context.Context, hsots []string) error
 }
 
 type isMasterResult struct {
@@ -19,19 +20,19 @@ type isMasterResult struct {
 	IsSecondary bool `bson:"secondary"`
 }
 
-type replicaSetMember struct {
-	ID      int    `bson:"_id"`
-	Host    string `bson:"host"`
-	Healthy *int   `bson:"health,omitempty"`
+type ReplicaMember struct {
+	ID     int    `bson:"_id"`
+	Host   string `bson:"host"`
+	Health int    `bson:"health,omitempty"`
 }
 
-type replicaSetConfig struct {
-	ID      string              `bson:"_id"`
-	Version int                 `bson:"version"`
-	Members []*replicaSetMember `bson:"members"`
+type ReplicaSetConfig struct {
+	ID      string           `bson:"_id"`
+	Version int              `bson:"version"`
+	Members []*ReplicaMember `bson:"members"`
 }
 
-func (r *replicaSetConfig) GetMember(host string) *replicaSetMember {
+func (r *ReplicaSetConfig) GetMember(host string) *ReplicaMember {
 	for _, member := range r.Members {
 		if member.Host == host {
 			return member
@@ -41,7 +42,7 @@ func (r *replicaSetConfig) GetMember(host string) *replicaSetMember {
 	return nil
 }
 
-func (r *replicaSetConfig) IsMember(host string) bool {
+func (r *ReplicaSetConfig) IsMember(host string) bool {
 	for _, member := range r.Members {
 		if member.Host == host || strings.Contains(member.Host, host) {
 			return true
@@ -51,26 +52,38 @@ func (r *replicaSetConfig) IsMember(host string) bool {
 	return false
 }
 
-func (r *replicaSetConfig) LengthMemberLive() int {
+func (r *ReplicaSetConfig) LengthMemberLive() int {
 
 	var count int
 	for _, member := range r.Members {
-		if member.Healthy != nil && *member.Healthy == 1 {
+		if member.Health == 1 {
 			count++
 		}
 	}
 	return count
 }
 
-func (r *replicaSetConfig) GetMemberNotLive() []*replicaSetMember {
+func (r *ReplicaSetConfig) GetMemberNotLive() []*ReplicaMember {
 
-	var members []*replicaSetMember
+	var members []*ReplicaMember
 	for _, member := range r.Members {
-		if member.Healthy != nil && *member.Healthy != 1 {
+		if member.Health != 1 {
 			members = append(members, member)
 		}
 	}
 	return members
+}
+
+func (r *ReplicaSetConfig) MembersNames() []string {
+
+	var members []string
+
+	for _, member := range r.Members {
+		members = append(members, strings.Split(member.Host, ".")[0])
+	}
+
+	return members
+
 }
 
 type messageOk struct {

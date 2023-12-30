@@ -9,10 +9,10 @@ import (
 )
 
 func (h *mongoHandler) IsInitialized(ctx context.Context) (bool, error) {
-	var out = make(map[string]interface{})
+	var out ReplicaSetConfig
 	res := h.client.Database("admin").RunCommand(ctx, bson.M{
 		"replSetGetStatus": 1,
-	}, options.RunCmd()).Decode(out)
+	}, options.RunCmd()).Decode(&out)
 
 	if res != nil {
 		if types.ErrorNoReplicaSetConfig.Match(res) {
@@ -21,5 +21,5 @@ func (h *mongoHandler) IsInitialized(ctx context.Context) (bool, error) {
 		return false, res
 	}
 
-	return out["set"].(string) != "", nil
+	return out.ID != types.MONGO_REPLICA_SET.Get(), nil
 }
