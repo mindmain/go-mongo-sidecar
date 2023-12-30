@@ -126,11 +126,11 @@ func (s *sidecarService) Run(ctx context.Context) error {
 						if morePodsOfMembers || lessPodsOfMembers {
 
 							if morePodsOfMembers {
-								log.Println("[INFO] more pods of members")
+								log.Printf("[INFO] more pods of members, pods: %d members: %d ", len(hosts), mongoMembersLive)
 							}
 
 							if lessPodsOfMembers {
-								log.Println("[INFO] less pods of members")
+								log.Printf("[INFO] less pods of members, pods: %d members: %d ", len(hosts), mongoMembersLive)
 							}
 
 							if err := s.mongoHandler.ReplicaSetReconfig(ctx, hosts); err != nil {
