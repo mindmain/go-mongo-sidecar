@@ -11,12 +11,19 @@ func (h *mongoHandler) ReplicaSetReconfig(ctx context.Context, hosts []string) e
 
 	var ok messageOk
 
+	oldConfig, err := h.GetReplicaSetConfig(ctx)
+
+	if err != nil {
+		return err
+	}
+
 	res := h.client.Database("admin").RunCommand(ctx, bson.D{
 		{
 			Key: "replSetReconfig",
 			Value: bson.M{
 				"_id":     types.MONGO_REPLICA_SET.Get(),
 				"members": hostsToMembers(hosts),
+				"version": oldConfig.Version + 1,
 			},
 		},
 		{Key: "force", Value: true},
