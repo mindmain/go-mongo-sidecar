@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+spec:
+  selector:
+    matchLabels:
+      app: mongo
+  serviceName: mongo
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      serviceAccountName: sidecar-account
+      containers:
+        - name: mongo
+          image: mongo:7.0.5-rc0
+          command:
+            - mongod
+            - "--replSet"
+            - rs0
+            - "--bind_ip"
+            - "0.0.0.0"
+          ports:
+            - containerPort: 27017
+              name: mongo
+
+        - name: side
+          image: spinanico/test:v6
+          imagePullPolicy: IfNotPresent
+
+      volumes:
+        - name: db
+          emptyDir: {}
+
+  volumeClaimTemplates:
+    - metadata:
+        name: db
+      spec:
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 2Gi
+        accessModes:
+          - ReadWriteOnce
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sidecar-account
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sidecar-account
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: sidecar-account
+    namespace: default
+---
+
