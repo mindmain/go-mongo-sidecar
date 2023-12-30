@@ -4,6 +4,7 @@ const MONGO_PORT EvirontmentVariable = "MONGO_PORT"
 const MONGO_HOST EvirontmentVariable = "MONGO_HOST"
 const MONGO_USER EvirontmentVariable = "MONGO_USER"
 const MONGO_PASSWORD EvirontmentVariable = "MONGO_PASSWORD"
+const MONGO_REPLICA_SET EvirontmentVariable = "MONGO_REPLICA_SET"
 
 const HEADLESS_SERVICE EvirontmentVariable = "HEADLESS_SERVICE"
 
@@ -25,4 +26,5 @@ var defaultValues = map[EvirontmentVariable]string{
 	MONGO_PASSWORD:         "",
 	MONGO_USER:             "",
 	SIDECAR_SELECTOR_POD:   "app=mongo",
+	MONGO_REPLICA_SET:      "",
 }
