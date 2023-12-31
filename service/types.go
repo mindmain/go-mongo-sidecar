@@ -131,14 +131,27 @@ func (s *sidecarService) Run(ctx context.Context) error {
 				log.Println("[WARN] error to get hostname: ", err)
 				continue
 			}
+
+			isPod0 := strings.Contains(hostname, "0")
+
 			// if not primary member is equal to members and hostname contains 0, force reconfig from this pod
-			if notPrimaryMember == len(status.Members) && strings.Contains(hostname, "0") {
-				log.Println("[INFO] primary not exists, force reconfig")
-				if err := s.mongoHandler.Reconfig(ctx, addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())); err != nil {
-					log.Println("[WARN] error to reconfig replica set: ", err)
-					continue
+			if notPrimaryMember == len(status.Members) {
+				if isPod0 {
+					log.Println("[INFO] primary not exists, force reconfig")
+					if err := s.mongoHandler.Reconfig(ctx, addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())); err != nil {
+						log.Println("[WARN] error to reconfig replica set: ", err)
+						continue
+					} else {
+						log.Printf("[INFO] replica set reconfigured")
+					}
 				} else {
-					log.Printf("[INFO] replica set reconfigured")
+					log.Println("[INFO] primary not exists, but this pod is not 0, freeze replica set to 5 seconds")
+					if err := s.mongoHandler.Freeze(ctx, 5); err != nil {
+						log.Println("[WARN] error to freeze replica set: ", err)
+						continue
+					} else {
+						log.Printf("[INFO] replica set freezed")
+					}
 				}
 			}
 		}

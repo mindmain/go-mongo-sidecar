@@ -12,6 +12,7 @@ type HandlerMongoReplicaSet interface {
 	IsSecondary(ctx context.Context) (bool, error)
 	Status(ctx context.Context) (*ReplicaSetStatus, error)
 	Init(ctx context.Context, hsots []string) error
+	Freeze(ctx context.Context, sec int) error
 }
 
 type isMasterResult struct {
