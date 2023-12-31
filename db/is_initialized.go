@@ -4,22 +4,21 @@ import (
 	"context"
 
 	"github.com/mindmain/go-mongo-sidecar/types"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func (h *mongoHandler) IsInitialized(ctx context.Context) (bool, error) {
-	var out ReplicaSetConfig
-	res := h.client.Database("admin").RunCommand(ctx, bson.M{
-		"replSetGetStatus": 1,
-	}, options.RunCmd()).Decode(&out)
 
-	if res != nil {
-		if types.ErrorNoReplicaSetConfig.Match(res) {
+	status, err := h.Status(ctx)
+
+	if err != nil {
+
+		if types.ErrorNoReplicaSetConfig.Match(err) {
 			return false, nil
 		}
-		return false, res
+
+		return false, err
 	}
 
-	return out.ID != types.MONGO_REPLICA_SET.Get(), nil
+	return status.SetName == types.MONGO_REPLICA_SET.Get(), nil
+
 }

@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"strings"
 )
 
@@ -154,13 +153,11 @@ func (r *ReplicaSetStatus) MembersPrintStatus() string {
 
 	var status []string
 
-	status = append(status, fmt.Sprintf(" %d members: %v", len(r.Members), r.MembersNames()))
-
 	for _, member := range r.Members {
 		status = append(status, strings.Join([]string{member.Name, member.StateStr}, ":"))
 	}
 
-	return strings.Join(status, "\n")
+	return strings.Join(status, " - ")
 
 }
 

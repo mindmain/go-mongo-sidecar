@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -35,147 +34,73 @@ func NewSidercarService(
 }
 
 type sidecarService struct {
-	mongoHandler db.HandlerMongoReplicaSet
-	k8sHandler   k8s.HandlerKubernetes
+	mongoHandler  db.HandlerMongoReplicaSet
+	k8sHandler    k8s.HandlerKubernetes
+	sleepDuration time.Duration
+	waitDuration  time.Duration
+	isInitialized bool
+	state         string
+	serviceRole   role
 }
 
 func (s *sidecarService) Run(ctx context.Context) error {
 
-	if s.k8sHandler == nil {
-		return fmt.Errorf("k8s handler is nil")
-	}
+	// check if all dependencies are ok and setted env variables
+	s.check()
+	s.initDuration()
 
-	if s.mongoHandler == nil {
-		return fmt.Errorf("mongo handler is nil")
-	}
+	log.Println("[INFO] starting sidecar ")
+	s.wait()
 
-	if types.MONGO_REPLICA_SET.Get() == "" {
-		return fmt.Errorf("mongo replica set is empty please set name of replica set in the env variable: %s", string(types.MONGO_REPLICA_SET))
-	}
-
-	selector, err := stringLabelToMap(types.SIDECAR_SELECTOR_POD.Get())
-
-	if err != nil {
-		return err
-	}
-
-	pods, err := s.k8sHandler.GetPodsNamesWithMatchLabels(ctx, selector)
-
-	if err != nil {
-		return err
-	}
-
-	if len(pods) == 0 {
-		return fmt.Errorf("not found pods with label app=mongo")
-	}
-
-	log.Println("[INFO] found pods: ", pods)
-
-	sleep := time.Second * time.Duration(types.SIDECAR_TIME_SLEEP.Int64())
-	wait := time.Second * time.Duration(types.SIDECAR_TIME_TO_WAIT.Int64())
-
-	if sleep <= 0 {
-		sleep = time.Second * 5
-	}
-
-	if wait <= 0 {
-		wait = time.Second * 10
-	}
-
-	time.Sleep(wait)
-
-	var printMyStatus = false
-	var im = unknown
 	for {
-		time.Sleep(sleep)
+		s.sleep()
 
-		pods, err = s.k8sHandler.GetPodsNamesWithMatchLabels(ctx, selector)
+		if err := s.initMongo(ctx); err != nil {
+			log.Println("[ERROR] error on init mongo: ", err)
+		}
+
+		status, err := s.mongoHandler.Status(ctx)
+		if err != nil {
+			log.Println("[ERROR] error on get status: ", err)
+			continue
+		}
+		pods, err := s.pods(ctx)
 
 		if err != nil {
-			log.Println("[WARN] error to get pods names with match labels: ", err)
+			log.Println("[ERROR] error on get pods: ", err)
 			continue
 		}
 
-		hosts := addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())
+		s.printStatus(status, pods)
 
-		if len(hosts) == 0 {
-			log.Println("[WARN] not found hosts")
-			continue
-		}
-
-		if isInitialized, err := s.mongoHandler.IsInitialized(ctx); err != nil {
-			log.Println("[WARN] error to check mongo replica set is initialized: ", err)
+		if isPrimary, err := s.mongoHandler.IsPrimary(ctx); err != nil {
+			log.Println("[WARN] error to get primary status: ", err)
 			continue
 		} else {
-			if !isInitialized {
-				log.Println("[INFO] mongo replica set is not initialized")
-				if err := s.mongoHandler.Init(ctx, hosts); err != nil {
-					log.Println("[WARN] error to init replica set: ", err)
-					continue
-				}
-			} else {
 
-				if isPrimary, err := s.mongoHandler.IsPrimary(ctx); err != nil {
+			if isPrimary {
 
-					log.Println("[WARN] error to check mongo replica set is primary: ", err)
-					continue
-				} else {
-
-					if isPrimary && im != primary {
-						im = primary
-						printMyStatus = false
-					} else if !isPrimary && im != secondary {
-						im = secondary
-						printMyStatus = false
+				hosts := addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())
+				mongoMembersLive := status.LengthMemberLive()
+				morePodsOfMembers := len(hosts) > mongoMembersLive
+				lessPodsOfMembers := len(hosts) < mongoMembersLive
+				if morePodsOfMembers || lessPodsOfMembers {
+					if morePodsOfMembers {
+						log.Printf("[INFO] more pods of members, pods: %d members: %d ", len(hosts), mongoMembersLive)
+					}
+					if lessPodsOfMembers {
+						log.Printf("[INFO] less pods of members, pods: %d members: %d ", len(hosts), mongoMembersLive)
+					}
+					if err := s.mongoHandler.Reconfig(ctx, hosts); err != nil {
+						log.Println("[WARN] error to reconfig replica set: ", err)
+						continue
+					} else {
+						log.Println("[INFO] replica set reconfigured")
 					}
 
-					if !printMyStatus {
-						if isPrimary {
-							log.Println("[INFO] I am primary")
-						} else {
-							log.Println("[INFO] I am secondary")
-
-						}
-						printMyStatus = true
-					}
-
-					if isPrimary {
-
-						status, err := s.mongoHandler.Status(ctx)
-
-						if err != nil {
-							log.Println("[WARN] error to get replica set config: ", err)
-							continue
-						}
-
-						mongoMembersLive := status.LengthMemberLive()
-						morePodsOfMembers := len(hosts) > mongoMembersLive
-						lessPodsOfMembers := len(hosts) < mongoMembersLive
-
-						if morePodsOfMembers || lessPodsOfMembers {
-
-							if morePodsOfMembers {
-								log.Printf("[INFO] more pods of members, pods: %d members: %d ", len(hosts), mongoMembersLive)
-							}
-							if lessPodsOfMembers {
-								log.Printf("[INFO] less pods of members, pods: %d members: %d ", len(hosts), mongoMembersLive)
-							}
-
-							log.Println("[INFO] pods: ", pods)
-							log.Println("[INFO] replica set status: ", status.SetName, status.MembersPrintStatus())
-
-							if err := s.mongoHandler.Reconfig(ctx, hosts); err != nil {
-								log.Println("[WARN] error to reconfig replica set: ", err)
-								continue
-							}
-
-						}
-
-					}
 				}
 
 			}
-
 		}
 
 	}
