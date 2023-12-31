@@ -22,6 +22,9 @@ func (s *sidecarService) initDuration() {
 		wait = time.Second * 10
 	}
 
+	s.sleepDuration = sleep
+	s.waitDuration = wait
+
 }
 
 func (s *sidecarService) wait() {

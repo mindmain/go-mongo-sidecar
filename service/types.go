@@ -49,7 +49,7 @@ func (s *sidecarService) Run(ctx context.Context) error {
 	s.check()
 	s.initDuration()
 
-	log.Println("[INFO] starting sidecar ")
+	log.Printf("[INFO] starting sidecar time to wait mongo startup %.2f seconds check status of replica set every %.2f seconds", s.waitDuration.Seconds()+s.sleepDuration.Seconds(), s.sleepDuration.Seconds())
 	s.wait()
 
 	for {
