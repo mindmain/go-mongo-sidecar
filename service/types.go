@@ -80,6 +80,8 @@ func (s *sidecarService) Run(ctx context.Context) error {
 
 			if isPrimary {
 
+				s.serviceRole = primary
+
 				hosts := addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())
 				mongoMembersLive := status.LengthMemberLive()
 				morePodsOfMembers := len(hosts) > mongoMembersLive
@@ -100,6 +102,8 @@ func (s *sidecarService) Run(ctx context.Context) error {
 
 				}
 
+			} else {
+				s.serviceRole = secondary
 			}
 		}
 
