@@ -99,7 +99,7 @@ func (s *sidecarService) Run(ctx context.Context) error {
 		} else {
 			if !isInitialized {
 				log.Println("[INFO] mongo replica set is not initialized")
-				if err := s.mongoHandler.InitReplicaSet(ctx, hosts); err != nil {
+				if err := s.mongoHandler.Init(ctx, hosts); err != nil {
 					log.Println("[WARN] error to init replica set: ", err)
 					continue
 				}
@@ -112,14 +112,14 @@ func (s *sidecarService) Run(ctx context.Context) error {
 				} else {
 					if isPrimary {
 
-						replicaConfig, err := s.mongoHandler.GetReplicaSetConfig(ctx)
+						status, err := s.mongoHandler.Status(ctx)
 
 						if err != nil {
 							log.Println("[WARN] error to get replica set config: ", err)
 							continue
 						}
 
-						mongoMembersLive := replicaConfig.LengthMemberLive()
+						mongoMembersLive := status.LengthMemberLive()
 						morePodsOfMembers := len(hosts) > mongoMembersLive
 						lessPodsOfMembers := len(hosts) < mongoMembersLive
 
@@ -128,12 +128,14 @@ func (s *sidecarService) Run(ctx context.Context) error {
 							if morePodsOfMembers {
 								log.Printf("[INFO] more pods of members, pods: %d members: %d ", len(hosts), mongoMembersLive)
 							}
-
 							if lessPodsOfMembers {
 								log.Printf("[INFO] less pods of members, pods: %d members: %d ", len(hosts), mongoMembersLive)
 							}
 
-							if err := s.mongoHandler.ReplicaSetReconfig(ctx, hosts); err != nil {
+							log.Println("[INFO] pods: ", pods)
+							log.Println("[INFO] replica set status: ", status.SetName, status.MembersPrintStatus())
+
+							if err := s.mongoHandler.Reconfig(ctx, hosts); err != nil {
 								log.Println("[WARN] error to reconfig replica set: ", err)
 								continue
 							}
