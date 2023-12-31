@@ -11,6 +11,14 @@ import (
 	"github.com/mindmain/go-mongo-sidecar/types"
 )
 
+type role string
+
+const (
+	primary   role = "primary"
+	secondary role = "secondary"
+	unknown   role = "unknown"
+)
+
 type SidecarService interface {
 	Run(ctx context.Context) error
 }
@@ -76,6 +84,8 @@ func (s *sidecarService) Run(ctx context.Context) error {
 
 	time.Sleep(wait)
 
+	var printMyStatus = false
+	var im = unknown
 	for {
 		time.Sleep(sleep)
 
@@ -110,6 +120,25 @@ func (s *sidecarService) Run(ctx context.Context) error {
 					log.Println("[WARN] error to check mongo replica set is primary: ", err)
 					continue
 				} else {
+
+					if isPrimary && im != primary {
+						im = primary
+						printMyStatus = false
+					} else if !isPrimary && im != secondary {
+						im = secondary
+						printMyStatus = false
+					}
+
+					if !printMyStatus {
+						if isPrimary {
+							log.Println("[INFO] I am primary")
+						} else {
+							log.Println("[INFO] I am secondary")
+
+						}
+						printMyStatus = true
+					}
+
 					if isPrimary {
 
 						status, err := s.mongoHandler.Status(ctx)
