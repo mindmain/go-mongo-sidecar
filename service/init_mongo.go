@@ -8,10 +8,6 @@ import (
 
 func (s *sidecarService) initMongo(ctx context.Context) error {
 
-	if s.isInitialized {
-		return nil
-	}
-
 	isInitialized, err := s.mongoHandler.IsInitialized(ctx)
 
 	if err != nil {
@@ -19,7 +15,6 @@ func (s *sidecarService) initMongo(ctx context.Context) error {
 	}
 
 	if isInitialized {
-		s.isInitialized = true
 		return nil
 	} else {
 
@@ -33,7 +28,6 @@ func (s *sidecarService) initMongo(ctx context.Context) error {
 		if err = s.mongoHandler.Init(ctx, addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())); err != nil {
 			return err
 		} else {
-			s.isInitialized = true
 			return nil
 		}
 

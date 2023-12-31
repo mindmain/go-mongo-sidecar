@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"log"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/mindmain/go-mongo-sidecar/db"
@@ -38,7 +40,6 @@ type sidecarService struct {
 	k8sHandler    k8s.HandlerKubernetes
 	sleepDuration time.Duration
 	waitDuration  time.Duration
-	isInitialized bool
 	state         string
 	serviceRole   role
 }
@@ -95,7 +96,7 @@ func (s *sidecarService) Run(ctx context.Context) error {
 		if isPrimary {
 
 			hosts := addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())
-			mongoMembersLive := status.LengthMemberLive()
+			mongoMembersLive := len(status.Members)
 			morePodsOfMembers := len(hosts) > mongoMembersLive
 			lessPodsOfMembers := len(hosts) < mongoMembersLive
 			if morePodsOfMembers || lessPodsOfMembers {
@@ -113,6 +114,33 @@ func (s *sidecarService) Run(ctx context.Context) error {
 				}
 			}
 
+		}
+
+		// if primary not exists, force reconfig
+		if isSecondary {
+			notPrimaryMember := 0
+			for _, member := range status.Members {
+				if member.StateStr != "PRIMARY" {
+					notPrimaryMember++
+				}
+			}
+
+			hostname, err := os.Hostname()
+
+			if err != nil {
+				log.Println("[WARN] error to get hostname: ", err)
+				continue
+			}
+			// if not primary member is equal to members and hostname contains 0, force reconfig from this pod
+			if notPrimaryMember == len(status.Members) && strings.Contains(hostname, "0") {
+				log.Println("[INFO] primary not exists, force reconfig")
+				if err := s.mongoHandler.Reconfig(ctx, addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())); err != nil {
+					log.Println("[WARN] error to reconfig replica set: ", err)
+					continue
+				} else {
+					log.Printf("[INFO] replica set reconfigured")
+				}
+			}
 		}
 
 		s.printStatus(status, pods)
