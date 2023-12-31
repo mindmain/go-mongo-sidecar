@@ -71,42 +71,51 @@ func (s *sidecarService) Run(ctx context.Context) error {
 			continue
 		}
 
-		s.printStatus(status, pods)
-
-		if isPrimary, err := s.mongoHandler.IsPrimary(ctx); err != nil {
+		isPrimary, err := s.mongoHandler.IsPrimary(ctx)
+		if err != nil {
 			log.Println("[WARN] error to get primary status: ", err)
 			continue
-		} else {
-
-			if isPrimary {
-
-				s.serviceRole = primary
-
-				hosts := addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())
-				mongoMembersLive := status.LengthMemberLive()
-				morePodsOfMembers := len(hosts) > mongoMembersLive
-				lessPodsOfMembers := len(hosts) < mongoMembersLive
-				if morePodsOfMembers || lessPodsOfMembers {
-					if morePodsOfMembers {
-						log.Printf("[INFO] more pods of members, pods: %d members: %d ", len(hosts), mongoMembersLive)
-					}
-					if lessPodsOfMembers {
-						log.Printf("[INFO] less pods of members, pods: %d members: %d ", len(hosts), mongoMembersLive)
-					}
-					if err := s.mongoHandler.Reconfig(ctx, hosts); err != nil {
-						log.Println("[WARN] error to reconfig replica set: ", err)
-						continue
-					} else {
-						log.Println("[INFO] replica set reconfigured")
-					}
-
-				}
-
-			} else {
-				s.serviceRole = secondary
-			}
 		}
 
+		isSecondary, err := s.mongoHandler.IsSecondary(ctx)
+
+		if err != nil {
+			log.Println("[WARN] error to get secondary status: ", err)
+			continue
+		}
+
+		if isPrimary {
+			s.serviceRole = primary
+		} else if isSecondary {
+			s.serviceRole = secondary
+		} else {
+			s.serviceRole = unknown
+		}
+
+		if isPrimary {
+
+			hosts := addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())
+			mongoMembersLive := status.LengthMemberLive()
+			morePodsOfMembers := len(hosts) > mongoMembersLive
+			lessPodsOfMembers := len(hosts) < mongoMembersLive
+			if morePodsOfMembers || lessPodsOfMembers {
+				if morePodsOfMembers {
+					log.Printf("[INFO] more pods of members, pods: %d members: %d ", len(hosts), mongoMembersLive)
+				}
+				if lessPodsOfMembers {
+					log.Printf("[INFO] less pods of members, pods: %d members: %d ", len(hosts), mongoMembersLive)
+				}
+				if err := s.mongoHandler.Reconfig(ctx, hosts); err != nil {
+					log.Println("[WARN] error to reconfig replica set: ", err)
+					continue
+				} else {
+					log.Println("[INFO] replica set reconfigured")
+				}
+			}
+
+		}
+
+		s.printStatus(status, pods)
 	}
 
 }

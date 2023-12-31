@@ -28,7 +28,7 @@ func (s *sidecarService) printStatus(status *db.ReplicaSetStatus, pods []string)
 		states = append(states, fmt.Sprintf("%s (%s)", getpodName(member.Name), member.StateStr))
 	}
 
-	ns := fmt.Sprintf("[INFO] Detect change status: sidecar %s i'm %s\nreplica members: %s\nmatched pods: %s", hostname, s.serviceRole, strings.Join(states, ", "), strings.Join(pods, ", "))
+	ns := fmt.Sprintf("[INFO]\nDetect change status: sidecar %s i'm %s\nreplica members: %s\nmatched pods: %s", hostname, s.serviceRole, strings.Join(states, ", "), strings.Join(pods, ", "))
 
 	if s.state != ns {
 		log.Println(ns)
