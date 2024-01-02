@@ -9,9 +9,9 @@ You must define follow environment variables:
 
 * MONGO_REPLICA_SET
 * HEADLESS_SERVICE
-* SIDECAR_SELECTOR_POD
 
-see [examples](./examples/minikube.yaml)
+see [examples](./examples/minikube.yaml) to complete example.
+you can see all go-mongo-sidecar versions [releases](https://github.com/orgs/mindmain/packages?tab=packages&q=go-mongo-sidecar)
 
 ## How does it work
 
