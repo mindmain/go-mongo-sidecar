@@ -2,6 +2,17 @@
 
 Go mongo sidecar is an application written in golang, which using the sidecar patter provides for the realignment and configuration of a mongo replicaSet.
 
+## How use it
+
+use this images to use go-mongo-sidecar `ghcr.io/mindmain/go-mongo-sidecar:0.1.0`.
+You must define follow environment variables:
+
+* MONGO_REPLICA_SET
+* HEADLESS_SERVICE
+* SIDECAR_SELECTOR_POD
+
+see [examples](./examples/minikube.yaml)
+
 ## How does it work
 
 Each go sidecar has a wait time and a pause time, only the node that is recognized as primary will make reconfiguration changes to the mongo replicaSet.
