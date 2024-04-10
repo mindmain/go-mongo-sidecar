@@ -17,7 +17,7 @@ func (h *mongoHandler) Reconfig(ctx context.Context, hosts []string) error {
 		return err
 	}
 
-	res := h.client.Database("admin").RunCommand(ctx, bson.D{
+	var config = bson.D{
 		{
 			Key: "replSetReconfig",
 			Value: bson.M{
@@ -27,7 +27,9 @@ func (h *mongoHandler) Reconfig(ctx context.Context, hosts []string) error {
 			},
 		},
 		{Key: "force", Value: true},
-	})
+	}
+
+	res := h.client.Database("admin").RunCommand(ctx, config)
 
 	if err := res.Decode(&ok); err != nil {
 		return err

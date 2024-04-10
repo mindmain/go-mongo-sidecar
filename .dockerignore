@@ -1,0 +1,6 @@
+examples/
+.git/
+.gitignore
+build*
+test*
+README.md

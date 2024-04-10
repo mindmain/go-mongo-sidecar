@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/mindmain/go-mongo-sidecar/types"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,6 +29,10 @@ func (k *k8sHandler) GetPodsNamesWithMatchLabels(ctx context.Context, labels map
 	for _, pod := range pods.Items {
 
 		if pod.Status.Phase != "Running" {
+			continue
+		}
+
+		if pod.Namespace != types.KUBE_NAMESPACE.Get() {
 			continue
 		}
 

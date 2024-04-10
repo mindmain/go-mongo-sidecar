@@ -9,6 +9,7 @@ You must define follow environment variables:
 
 * MONGO_REPLICA_SET
 * HEADLESS_SERVICE
+* KUBE_NAMESPACE
 
 see [examples](./examples/minikube.yaml) to complete example.
 you can see all go-mongo-sidecar versions [releases](https://github.com/orgs/mindmain/packages?tab=packages&q=go-mongo-sidecar)
