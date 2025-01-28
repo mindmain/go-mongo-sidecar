@@ -3,15 +3,17 @@ package db
 import (
 	"context"
 	"strings"
+
+	"github.com/mindmain/go-mongo-sidecar/k8s"
 )
 
 type HandlerMongoReplicaSet interface {
-	Reconfig(ctx context.Context, hosts []string) error
+	Reconfig(ctx context.Context, hosts []*k8s.MongoPod) error
 	IsInitialized(ctx context.Context) (bool, error)
 	IsPrimary(ctx context.Context) (bool, error)
 	IsSecondary(ctx context.Context) (bool, error)
 	Status(ctx context.Context) (*ReplicaSetStatus, error)
-	Init(ctx context.Context, hsots []string) error
+	Init(ctx context.Context, hosts []*k8s.MongoPod) error
 	Freeze(ctx context.Context, sec int) error
 }
 
@@ -86,7 +88,7 @@ func (r *ReplicaSetConfig) MembersNames() []string {
 
 }
 
-type ReplocaMemberStatus struct {
+type ResponseReplicaMemberStatusCommand struct {
 	ID       int    `bson:"_id"`
 	Name     string `bson:"name"`
 	Health   int    `bson:"health"`
@@ -94,12 +96,12 @@ type ReplocaMemberStatus struct {
 	StateStr string `bson:"stateStr"`
 }
 type ReplicaSetStatus struct {
-	SetName string                 `bson:"set"`
-	Members []*ReplocaMemberStatus `bson:"members"`
-	Ok      int                    `bson:"ok"`
+	SetName string                                `bson:"set"`
+	Members []*ResponseReplicaMemberStatusCommand `bson:"members"`
+	Ok      int                                   `bson:"ok"`
 }
 
-func (r *ReplicaSetStatus) GetMember(host string) *ReplocaMemberStatus {
+func (r *ReplicaSetStatus) GetMember(host string) *ResponseReplicaMemberStatusCommand {
 	for _, member := range r.Members {
 		if member.Name == host {
 			return member

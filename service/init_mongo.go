@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-
-	"github.com/mindmain/go-mongo-sidecar/types"
 )
 
 func (s *sidecarService) initMongo(ctx context.Context) error {
@@ -25,7 +23,7 @@ func (s *sidecarService) initMongo(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if err = s.mongoHandler.Init(ctx, addServiceToPodsNames(pods, types.HEADLESS_SERVICE)); err != nil {
+		if err = s.mongoHandler.Init(ctx, pods); err != nil {
 			return err
 		} else {
 			return nil

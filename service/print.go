@@ -7,13 +7,14 @@ import (
 	"strings"
 
 	"github.com/mindmain/go-mongo-sidecar/db"
+	"github.com/mindmain/go-mongo-sidecar/k8s"
 )
 
-func getpodName(host string) string {
+func getPodName(host string) string {
 	return strings.Split(host, ".")[0]
 }
 
-func (s *sidecarService) printStatus(status *db.ReplicaSetStatus, pods []string) {
+func (s *sidecarService) printStatus(status *db.ReplicaSetStatus, pods []*k8s.MongoPod) {
 
 	hostname, err := os.Hostname()
 
@@ -25,10 +26,16 @@ func (s *sidecarService) printStatus(status *db.ReplicaSetStatus, pods []string)
 	var states []string
 
 	for _, member := range status.Members {
-		states = append(states, fmt.Sprintf("%s (%s)", getpodName(member.Name), member.StateStr))
+		states = append(states, fmt.Sprintf("%s (%s)", getPodName(member.Name), member.StateStr))
 	}
 
-	ns := fmt.Sprintf("[INFO]\nDetect change status: sidecar %s i'm %s\nreplica members: %s\nmatched pods: %s", hostname, s.serviceRole, strings.Join(states, ", "), strings.Join(pods, ", "))
+	printResult := make([]string, len(pods))
+
+	for i, pod := range pods {
+		printResult[i] = fmt.Sprintf("%s (%s)", pod.Name, pod.IP)
+	}
+
+	ns := fmt.Sprintf("[INFO]\nDetect change status: sidecar %s i'm %s\nreplica members: %s\nmatched pods: %s", hostname, s.serviceRole, strings.Join(states, ", "), strings.Join(printResult, ", "))
 
 	if s.state != ns {
 		log.Println(ns)

@@ -27,7 +27,7 @@ func main() {
 
 	handlerMongo := db.NewMongoHandler(mongoClient)
 
-	sidecarService := service.NewSidercarService(handlerMongo, kubeHandler)
+	sidecarService := service.NewSidecarService(handlerMongo, kubeHandler)
 
 	if err := sidecarService.Run(context.Background()); err != nil {
 		log.Fatal(err)

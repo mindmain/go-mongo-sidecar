@@ -2,13 +2,27 @@ package k8s
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/mindmain/go-mongo-sidecar/types"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (k *k8sHandler) GetPodsNamesWithMatchLabels(ctx context.Context, labels map[string]string) ([]string, error) {
+type MongoPod struct {
+	Name string
+	IP   string
+}
+
+func (m *MongoPod) String() string {
+	if m == nil {
+		return "(nil)"
+	}
+
+	return fmt.Sprintf("%s(%s)", m.Name, m.IP)
+}
+
+func (k *k8sHandler) GetPodsNamesWithMatchLabels(ctx context.Context, labels map[string]string) ([]*MongoPod, error) {
 
 	var s []string
 
@@ -24,7 +38,7 @@ func (k *k8sHandler) GetPodsNamesWithMatchLabels(ctx context.Context, labels map
 		return nil, err
 	}
 
-	var names []string
+	var mongoPods []*MongoPod
 
 	for _, pod := range pods.Items {
 
@@ -36,8 +50,11 @@ func (k *k8sHandler) GetPodsNamesWithMatchLabels(ctx context.Context, labels map
 			continue
 		}
 
-		names = append(names, pod.Name)
+		mongoPods = append(mongoPods, &MongoPod{
+			Name: pod.Name,
+			IP:   pod.Status.PodIP,
+		})
 	}
 
-	return names, nil
+	return mongoPods, nil
 }

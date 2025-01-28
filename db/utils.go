@@ -3,6 +3,8 @@ package db
 import (
 	"strconv"
 	"strings"
+
+	"github.com/mindmain/go-mongo-sidecar/k8s"
 )
 
 type configurationReplicaMember struct {
@@ -10,13 +12,13 @@ type configurationReplicaMember struct {
 	Host string `bson:"host"`
 }
 
-func hostsToMembers(hosts []string) []*configurationReplicaMember {
+func hostsToMembers(hosts []*k8s.MongoPod) []*configurationReplicaMember {
 	var members = make([]*configurationReplicaMember, 0, len(hosts))
 
 	for _, host := range hosts {
 		members = append(members, &configurationReplicaMember{
-			ID:   getNumberStatefulSet(host),
-			Host: host,
+			ID:   getNumberStatefulSet(host.Name),
+			Host: host.IP,
 		})
 	}
 

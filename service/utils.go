@@ -3,6 +3,8 @@ package service
 import (
 	"fmt"
 	"strings"
+
+	"github.com/mindmain/go-mongo-sidecar/k8s"
 )
 
 func stringLabelToMap(label string) (map[string]string, error) {
@@ -26,7 +28,7 @@ func stringLabelToMap(label string) (map[string]string, error) {
 
 }
 
-func addServiceToPodsNames(podsNames []string, serviceName string) []string {
+func addServiceToPodsNames(podsNames []*k8s.MongoPod, serviceName string) []string {
 
 	result := make([]string, len(podsNames))
 
