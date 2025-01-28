@@ -9,7 +9,7 @@ import (
 func (s *sidecarService) pods(ctx context.Context) ([]string, error) {
 
 	// make selector to get pods with label es. app=mongo
-	selector, err := stringLabelToMap(types.SIDECAR_SELECTOR_POD.Get())
+	selector, err := stringLabelToMap(types.SIDECAR_SELECTOR_POD)
 	if err != nil {
 		return nil, err
 	}

@@ -21,7 +21,7 @@ func (h *mongoHandler) Reconfig(ctx context.Context, hosts []string) error {
 		{
 			Key: "replSetReconfig",
 			Value: bson.M{
-				"_id":     types.MONGO_REPLICA_SET.Get(),
+				"_id":     types.MONGO_REPLICA_SET,
 				"members": hostsToMembers(hosts),
 				"version": oldConfig.Version + 1,
 			},

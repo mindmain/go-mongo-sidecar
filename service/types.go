@@ -95,7 +95,7 @@ func (s *sidecarService) Run(ctx context.Context) error {
 
 		if isPrimary {
 
-			hosts := addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())
+			hosts := addServiceToPodsNames(pods, types.HEADLESS_SERVICE)
 			mongoMembersLive := len(status.Members)
 			morePodsOfMembers := len(hosts) > mongoMembersLive
 			lessPodsOfMembers := len(hosts) < mongoMembersLive
@@ -144,7 +144,7 @@ func (s *sidecarService) Run(ctx context.Context) error {
 			if notPrimaryMember == len(status.Members) {
 				if isPod0 {
 					log.Println("[INFO] primary not exists, force reconfig")
-					if err := s.mongoHandler.Reconfig(ctx, addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())); err != nil {
+					if err := s.mongoHandler.Reconfig(ctx, addServiceToPodsNames(pods, types.HEADLESS_SERVICE)); err != nil {
 						log.Println("[WARN] error to reconfig replica set: ", err)
 						continue
 					} else {

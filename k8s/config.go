@@ -9,7 +9,7 @@ import (
 )
 
 func KubeClient() (*kubernetes.Clientset, error) {
-	tokenFile, err := os.ReadFile(types.KUBE_CONFIG_TOKEN_PATH.Get())
+	tokenFile, err := os.ReadFile(types.KUBE_CONFIG_TOKEN_PATH)
 
 	if err != nil {
 		return nil, err

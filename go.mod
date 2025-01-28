@@ -1,6 +1,6 @@
 module github.com/mindmain/go-mongo-sidecar
 
-go 1.21.3
+go 1.23.2
 
 require (
 	go.mongodb.org/mongo-driver v1.13.1

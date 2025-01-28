@@ -32,7 +32,7 @@ func (k *k8sHandler) GetPodsNamesWithMatchLabels(ctx context.Context, labels map
 			continue
 		}
 
-		if pod.Namespace != types.KUBE_NAMESPACE.Get() {
+		if pod.Namespace != types.KUBE_NAMESPACE {
 			continue
 		}
 

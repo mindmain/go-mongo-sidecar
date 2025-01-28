@@ -15,7 +15,7 @@ func (s *sidecarService) check() error {
 		return fmt.Errorf("mongo handler is nil")
 	}
 
-	if types.MONGO_REPLICA_SET.Get() == "" {
+	if types.MONGO_REPLICA_SET == "" {
 		return fmt.Errorf("mongo replica set is empty please set name of replica set in the env variable: %s", string(types.MONGO_REPLICA_SET))
 	}
 

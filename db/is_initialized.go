@@ -19,6 +19,6 @@ func (h *mongoHandler) IsInitialized(ctx context.Context) (bool, error) {
 		return false, err
 	}
 
-	return status.SetName == types.MONGO_REPLICA_SET.Get(), nil
+	return status.SetName == types.MONGO_REPLICA_SET, nil
 
 }

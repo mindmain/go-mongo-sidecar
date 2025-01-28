@@ -14,7 +14,7 @@ func (h *mongoHandler) Init(ctx context.Context, hosts []string) error {
 			Key: "replSetInitiate",
 			Value: bson.M{
 				"members": hostsToMembers(hosts),
-				"_id":     types.MONGO_REPLICA_SET.Get(),
+				"_id":     types.MONGO_REPLICA_SET,
 			},
 		},
 	})

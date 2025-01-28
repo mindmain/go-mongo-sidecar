@@ -11,11 +11,11 @@ import (
 
 func MongoConnLocal() (*mongo.Client, error) {
 
-	var port = types.MONGO_PORT.Get()
-	var host = types.MONGO_HOST.Get()
+	var port = types.MONGO_PORT
+	var host = types.MONGO_HOST
 
-	var psw = types.MONGO_PASSWORD.Get()
-	var user = types.MONGO_USER.Get()
+	var psw = types.MONGO_PASSWORD
+	var user = types.MONGO_USER
 
 	var uri = ""
 	if user == "" && psw == "" {

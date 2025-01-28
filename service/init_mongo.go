@@ -25,7 +25,7 @@ func (s *sidecarService) initMongo(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if err = s.mongoHandler.Init(ctx, addServiceToPodsNames(pods, types.HEADLESS_SERVICE.Get())); err != nil {
+		if err = s.mongoHandler.Init(ctx, addServiceToPodsNames(pods, types.HEADLESS_SERVICE)); err != nil {
 			return err
 		} else {
 			return nil
