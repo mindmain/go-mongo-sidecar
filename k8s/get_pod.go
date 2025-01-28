@@ -9,8 +9,18 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type Hostname string
+
+func (h Hostname) String() string {
+	return string(h)
+}
+
+func (h Hostname) WithService(srv string) string {
+	return fmt.Sprintf("%s.%s", h, srv)
+}
+
 type MongoPod struct {
-	Name string
+	Name Hostname
 	IP   string
 }
 
@@ -51,7 +61,7 @@ func (k *k8sHandler) GetPodsNamesWithMatchLabels(ctx context.Context, labels map
 		}
 
 		mongoPods = append(mongoPods, &MongoPod{
-			Name: pod.Name,
+			Name: Hostname(pod.Name),
 			IP:   pod.Status.PodIP,
 		})
 	}

@@ -6,10 +6,10 @@ func (h *mongoHandler) Status(ctx context.Context) (*ReplicaSetStatus, error) {
 
 	var result ReplicaSetStatus
 
-	res := h.client.Database("admin").RunCommand(ctx, map[string]string{"replSetGetStatus": "1"}).Decode(&result)
+	err := h.client.Database("admin").RunCommand(ctx, map[string]string{"replSetGetStatus": "1"}).Decode(&result)
 
-	if res != nil {
-		return nil, res
+	if err != nil {
+		return nil, err
 	}
 
 	return &result, nil

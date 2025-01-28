@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/mindmain/go-mongo-sidecar/k8s"
+	"github.com/mindmain/go-mongo-sidecar/types"
 )
 
 type configurationReplicaMember struct {
@@ -17,8 +18,8 @@ func hostsToMembers(hosts []*k8s.MongoPod) []*configurationReplicaMember {
 
 	for _, host := range hosts {
 		members = append(members, &configurationReplicaMember{
-			ID:   getNumberStatefulSet(host.Name),
-			Host: host.IP,
+			ID:   getNumberStatefulSet(host.Name.String()),
+			Host: host.Name.WithService(types.HEADLESS_SERVICE),
 		})
 	}
 

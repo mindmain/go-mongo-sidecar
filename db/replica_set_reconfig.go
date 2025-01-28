@@ -18,13 +18,16 @@ func (h *mongoHandler) Reconfig(ctx context.Context, hosts []*k8s.MongoPod) erro
 		return err
 	}
 
+	var priority float64 = 0.5
+
 	var config = bson.D{
 		{
 			Key: "replSetReconfig",
 			Value: bson.M{
-				"_id":     types.MONGO_REPLICA_SET,
-				"members": hostsToMembers(hosts),
-				"version": oldConfig.Version + 1,
+				"_id":      types.MONGO_REPLICA_SET,
+				"members":  hostsToMembers(hosts),
+				"version":  oldConfig.Version + 1,
+				"priority": priority,
 			},
 		},
 		{Key: "force", Value: true},
